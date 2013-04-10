@@ -1,0 +1,38 @@
+#!/usr/bin/make -f
+export DH_VERBOSE=1
+
+JOBS=$(shell expr 2 \* $(shell cat /proc/cpuinfo | grep processor | wc -l))
+KARGS=ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(JOBS)
+DESTDIR=debian/linux-n7-2013
+
+%:
+	dh $@
+
+override_dh_auto_clean:
+	$(MAKE) $(KARGS) distclean
+
+override_dh_auto_build:
+	$(MAKE) $(KARGS) flo_defconfig
+	$(MAKE) $(KARGS) zImage
+	mkbootimg \
+	        --base 0x80200000 \
+	        --kernel arch/arm/boot/zImage \
+	        --ramdisk /dev/null \
+	        --cmdline "console=ttyHSL0,115200,n8 console=ttyHSL0,115200,n8 loglevel=5 androidboot.hardware=flo msm_rtb.filter=0x3F ehci-hcd.park=3 rw rootwait root=/dev/mmcblk0p30 " \
+	        --output arch/arm/boot/boot.img
+
+# It's ugly that we're making the boot.img here because it contains the cmdline
+# and knows about our ramdisk preferences. We might want to split this up some
+# day.
+
+override_dh_auto_install:
+	mkdir -p $(DESTDIR)/boot
+	cp arch/arm/boot/zImage $(DESTDIR)/boot
+	cp arch/arm/boot/boot.img $(DESTDIR)/boot
+	$(MAKE) $(KARGS) INSTALL_MOD_PATH=$(DESTDIR) modules_install
+	rm -f $(DESTDIR)/lib/modules/*/build $(DESTDIR)/lib/modules/*/source
+	cp System.map $(DESTDIR)/boot/System.map-$(shell cat include/config/kernel.release)
+
+override_dh_auto_configure:
+override_dh_auto_test:
+	# pass
