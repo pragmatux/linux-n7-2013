@@ -12,7 +12,7 @@ override_dh_auto_clean:
 	$(MAKE) $(KARGS) distclean
 
 override_dh_auto_build:
-	$(MAKE) $(KARGS) flo_defconfig
+	$(MAKE) $(KARGS) local_defconfig
 	$(MAKE) $(KARGS) zImage
 	mkbootimg \
 	        --base 0x80200000 \
