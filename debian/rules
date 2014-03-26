@@ -13,7 +13,7 @@ override_dh_auto_clean:
 
 override_dh_auto_build:
 	$(MAKE) $(KARGS) local_defconfig
-	$(MAKE) $(KARGS) zImage
+	$(MAKE) $(KARGS) zImage modules
 	mkbootimg \
 	        --base 0x80200000 \
 	        --kernel arch/arm/boot/zImage \
